@@ -64,7 +64,11 @@ impl<'a> Sudoku<'a> {
 
     fn from(s: &str, board: &'a SudokuBoard) -> Sudoku<'a> {
         let mut sudoku = Sudoku::new(board);
-        for (k, c) in s.chars().filter(|c| (*c >= '1' && *c <= '9') || *c == '0' || *c == '.').enumerate() {
+        for (k, c) in s
+            .chars()
+            .filter(|c| (*c >= '1' && *c <= '9') || *c == '0' || *c == '.')
+            .enumerate()
+        {
             if c >= '1' && c <= '9' {
                 let v: usize = c.to_digit(10).unwrap() as usize;
                 if !sudoku.assign(k, v) {
@@ -76,7 +80,10 @@ impl<'a> Sudoku<'a> {
     }
 
     fn assign(&mut self, k: usize, v: usize) -> bool {
-        (1..=9).into_iter().filter(|i| *i != v).all(|i| self.eliminate(k, i))
+        (1..=9)
+            .into_iter()
+            .filter(|i| *i != v)
+            .all(|i| self.eliminate(k, i))
     }
 
     fn eliminate(&mut self, k: usize, v: usize) -> bool {
@@ -88,20 +95,22 @@ impl<'a> Sudoku<'a> {
                 0 => false,
                 1 => {
                     let val = self.uniq_val(k);
-                    self.board.neighbors[k].iter().all(|n| self.eliminate(*n, val))    
-                }
-                _ =>
-                    self.board.units_for[k]
+                    self.board.neighbors[k]
                         .iter()
-                        .map(|i| &self.board.units[*i])
-                        .all(|u| {
-                            let ps: Vec<&usize> = u.iter().filter(|p| self.cells[**p].contains(v)).collect();
-                            match ps.len() {
-                                0 => false,
-                                1 => self.assign(*ps[0], v),
-                                _ => true
-                            }
-                        })
+                        .all(|n| self.eliminate(*n, val))
+                }
+                _ => self.board.units_for[k]
+                    .iter()
+                    .map(|i| &self.board.units[*i])
+                    .all(|u| {
+                        let ps: Vec<&usize> =
+                            u.iter().filter(|p| self.cells[**p].contains(v)).collect();
+                        match ps.len() {
+                            0 => false,
+                            1 => self.assign(*ps[0], v),
+                            _ => true,
+                        }
+                    }),
             }
         }
     }
@@ -133,15 +142,13 @@ impl<'a> Sudoku<'a> {
             Some(self.clone())
         } else {
             let k = self.smaller_cell();
-            self.cells[k]
-                .iter()
-                .fold(None, |acc, v| match acc {
-                    Some(_) => acc,
-                    None => {
-                        let mut s = self.clone();
-                        s.assign(k, v).then(|| s.solve()).flatten()
-                    }
-                })
+            self.cells[k].iter().fold(None, |acc, v| match acc {
+                Some(_) => acc,
+                None => {
+                    let mut s = self.clone();
+                    s.assign(k, v).then(|| s.solve()).flatten()
+                }
+            })
         }
     }
 }
@@ -149,10 +156,10 @@ impl<'a> Sudoku<'a> {
 impl<'a> fmt::Display for Sudoku<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fn bitvector_to_str(b: &BitVector) -> String {
-            let n = b.iter().fold(0, |acc, n| acc*10 + n);
+            let n = b.iter().fold(0, |acc, n| acc * 10 + n);
             n.to_string()
         }
-    
+
         let width = self.cells.iter().map(|c| c.len() + 1).max().unwrap();
         let sep = "-".repeat(3 * width);
         for i in 0..9 {
@@ -163,13 +170,18 @@ impl<'a> fmt::Display for Sudoku<'a> {
                 if j == 3 || j == 6 {
                     write!(f, "| ")?;
                 }
-                write!(f, "{:width$}", bitvector_to_str(&self.cells[i*9 + j]), width = width)?;
+                write!(
+                    f,
+                    "{:width$}",
+                    bitvector_to_str(&self.cells[i * 9 + j]),
+                    width = width
+                )?;
             }
             writeln!(f, "")?;
         }
         writeln!(f, "")
     }
-} 
+}
 
 fn main() {
     let board = SudokuBoard::new();
@@ -184,8 +196,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
     use super::SudokuBoard;
+    use std::collections::HashSet;
 
     #[test]
     fn init_works() {
